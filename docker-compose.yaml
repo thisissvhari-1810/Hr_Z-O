@@ -4,10 +4,9 @@
 # Run:
 #   docker compose up --build
 #
-# Then open:
-#   http://localhost:4000          → frontend
-#   http://localhost:4000/api/...  → backend (proxied through nginx)
-#   http://localhost:5000/api/...  → backend (direct, useful for debugging)
+# Default host ports (override in .env or via env vars):
+#   FRONTEND_HOST_PORT=4000   →  http://localhost:4000        (frontend + /api/* proxy)
+#   BACKEND_HOST_PORT=5000    →  http://localhost:5000/api/*  (backend, direct access)
 # ----------------------------------------------------------------------
 
 services:
@@ -56,7 +55,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "5000:5000"
+      - "${BACKEND_HOST_PORT:-5000}:5000"
     networks:
       - peopleflow
 
@@ -69,7 +68,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "4000:80"
+      - "${FRONTEND_HOST_PORT:-4000}:80"
     networks:
       - peopleflow
 
