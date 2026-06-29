@@ -3,11 +3,11 @@
 PeopleFlow is an HR / HRMS marketing site plus a real auth backend.
 This repo is a small monorepo with three deployable units:
 
-| Folder                | Stack                            | Container port |
-| --------------------- | -------------------------------- | -------------- |
-| `hr_z&o_frontend/`    | Static HTML/CSS/JS + nginx       | `80`           |
-| `hr_z&o_backend/`     | Node 20 + Express + PostgreSQL   | `4000`         |
-| `(docker-compose)`    | + Postgres 16                    | `5432`         |
+| Folder                | Stack                            | Container port | Host port |
+| --------------------- | -------------------------------- | -------------- | --------- |
+| `hr_z&o_frontend/`    | Static HTML/CSS/JS + nginx       | `80`           | `4000`    |
+| `hr_z&o_backend/`     | Node 20 + Express + PostgreSQL   | `5000`         | `5000`    |
+| `(docker-compose)`    | + Postgres 16                    | `5432`         | `5432`    |
 
 The frontend uses nginx to serve static files **and** reverse-proxies
 `/api/*` to the backend, so the browser only ever talks to one origin.
@@ -24,16 +24,16 @@ docker compose up --build
 ```
 
 That builds the two images and starts the three containers. Wait until you
-see lines like `PeopleFlow backend listening on :4000` and `nginx/1.27.x`,
+see lines like `PeopleFlow backend listening on :5000` and `nginx/1.27.x`,
 then open:
 
 | URL                                   | What you get                                 |
 | ------------------------------------- | -------------------------------------------- |
-| <http://localhost:8080/>              | Marketing homepage                           |
-| <http://localhost:8080/pages/signup.html> | Real signup that creates a row in Postgres |
-| <http://localhost:8080/pages/login.html>  | Real login that returns a JWT             |
-| <http://localhost:8080/api/health>    | Backend health check                         |
-| <http://localhost:4000/api/health>    | Same, directly (bypassing nginx)             |
+| <http://localhost:4000/>              | Marketing homepage                           |
+| <http://localhost:4000/pages/signup.html> | Real signup that creates a row in Postgres |
+| <http://localhost:4000/pages/login.html>  | Real login that returns a JWT             |
+| <http://localhost:4000/api/health>    | Backend health check                         |
+| <http://localhost:5000/api/health>    | Same, directly (bypassing nginx)             |
 | `localhost:5432`                      | Postgres (user/pass below)                   |
 
 Default Postgres credentials (override via `.env`):
@@ -123,17 +123,17 @@ Passwords are bcrypt-hashed (12 rounds). Tokens are JWTs signed with
 
 ```bash
 # Create an account
-curl -X POST http://localhost:8080/api/auth/signup \
+curl -X POST http://localhost:4000/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{"firstName":"Demo","lastName":"User","email":"demo@peopleflow.in","password":"demopass123","company":"PeopleFlow"}'
 
 # Log in
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"demo@peopleflow.in","password":"demopass123"}'
 
 # Use the returned token
-curl http://localhost:8080/api/auth/me \
+curl http://localhost:4000/api/auth/me \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
@@ -148,7 +148,7 @@ cd "hr_z&o_frontend"
 powershell -ExecutionPolicy Bypass -File .\serve.ps1
 ```
 
-Opens at <http://localhost:8080>. Forms will fail until you also run the
+Opens at <http://localhost:4000>. Forms will fail until you also run the
 backend (because there's no `/api` proxy in this mode).
 
 ### Backend only
@@ -165,7 +165,7 @@ docker run --rm -d --name pgdev \
 cd hr_z&o_backend
 cp .env.example .env
 npm install
-npm start                       # listens on :4000
+npm start                       # listens on :5000
 ```
 
 ---

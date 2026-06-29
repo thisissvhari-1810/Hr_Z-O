@@ -32,7 +32,7 @@ cd hr_z&o_backend
 cp .env.example .env       # then edit DATABASE_URL etc.
 npm install
 npm run migrate            # creates tables (idempotent)
-npm start                  # boots on http://localhost:4000
+npm start                  # boots on http://localhost:5000
 ```
 
 ## Schema

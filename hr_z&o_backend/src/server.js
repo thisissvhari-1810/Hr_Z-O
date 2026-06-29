@@ -9,7 +9,7 @@ const { migrate } = require('./migrate');
 const authRoutes = require('./routes/auth.routes');
 const contactRoutes = require('./routes/contact.routes');
 
-const PORT = parseInt(process.env.PORT || '4000', 10);
+const PORT = parseInt(process.env.PORT || '5000', 10);
 
 const app = express();
 app.disable('x-powered-by');

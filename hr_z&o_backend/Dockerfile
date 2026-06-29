@@ -4,7 +4,7 @@
 FROM node:20-alpine
 
 ENV NODE_ENV=production \
-    PORT=4000
+    PORT=5000
 
 WORKDIR /app
 
@@ -22,9 +22,9 @@ COPY src ./src
 # Run as a non-root user (the image ships with one).
 USER node
 
-EXPOSE 4000
+EXPOSE 5000
 
 HEALTHCHECK --interval=30s --timeout=4s --start-period=20s --retries=3 \
-  CMD wget -q -O- http://127.0.0.1:4000/api/health > /dev/null || exit 1
+  CMD wget -q -O- http://127.0.0.1:5000/api/health > /dev/null || exit 1
 
 CMD ["node", "src/server.js"]

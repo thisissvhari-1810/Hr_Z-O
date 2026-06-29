@@ -61,21 +61,21 @@ like they will in production.
 **Using Python (already installed on most machines):**
 
 ```bash
-python -m http.server 8080
+python -m http.server 4000
 ```
 
-Then visit <http://localhost:8080>.
+Then visit <http://localhost:4000>.
 
 **Using Node.js:**
 
 ```bash
-npx serve .
+npx serve . -l 4000
 ```
 
 **Using PHP:**
 
 ```bash
-php -S localhost:8080
+php -S localhost:4000
 ```
 
 ---
