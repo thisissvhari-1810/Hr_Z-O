@@ -16,7 +16,6 @@ pipeline {
         NODE_ENV = 'production'
         PORT     = '5000'
 
-        # Database (Update if required)
         DB_HOST     = 'postgres'
         DB_PORT     = '5432'
         DB_NAME     = 'peopleflow'
