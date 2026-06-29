@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Leave — PeopleFlow</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+<link rel="stylesheet" href="../assets/css/app.css" />
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div>
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:14px">
+        <button class="menu-btn" aria-label="Menu"><span></span></button>
+        <div class="topbar-title">
+          <h1>Leave</h1>
+          <p>Apply for time off and track your requests.</p>
+        </div>
+      </div>
+      <div class="topbar-user" id="userMenu"></div>
+    </header>
+
+    <main class="content">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Apply for leave</h2>
+        </div>
+        <form id="applyForm" class="form" novalidate>
+          <div class="form-row">
+            <div class="field"><label>Type *</label>
+              <select name="leaveType" required>
+                <option value="casual">Casual</option>
+                <option value="sick">Sick</option>
+                <option value="earned">Earned</option>
+                <option value="unpaid">Unpaid</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="field"><label>From *</label><input name="fromDate" type="date" required /></div>
+            <div class="field"><label>To *</label>  <input name="toDate"   type="date" required /></div>
+          </div>
+          <div class="field"><label>Reason *</label><textarea name="reason" required placeholder="Brief context for your manager…"></textarea></div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <button type="submit" class="btn btn-primary">Submit request</button>
+            <span class="form-msg" id="applyMsg"></span>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel" style="margin-top:18px">
+        <div class="panel-head"><h2>My requests</h2></div>
+        <div id="mineHost"></div>
+      </div>
+
+      <div class="panel admin-only" style="margin-top:18px">
+        <div class="panel-head">
+          <h2>All requests (admin)</h2>
+          <select id="filter" style="padding:9px 12px;border:1px solid var(--border);border-radius:8px">
+            <option value="">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div id="allHost"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="../assets/js/app.js"></script>
+<script>
+PF.bootstrap({ active: 'leave.html' });
+
+async function loadMine() {
+  try {
+    const { leaves } = await PF.api('/api/leave/mine');
+    const host = document.getElementById('mineHost');
+    if (!leaves.length) {
+      host.innerHTML = '<div class="empty">You haven\'t applied for leave yet.</div>';
+      return;
+    }
+    const rows = leaves.map(l => `
+      <tr>
+        <td style="text-transform:capitalize">${l.leaveType}</td>
+        <td>${PF.fmt.date(l.fromDate)} → ${PF.fmt.date(l.toDate)}</td>
+        <td>${PF.fmt.escape(l.reason)}</td>
+        <td>${PF.fmt.statusBadge(l.status)}</td>
+        <td>${PF.fmt.datetime(l.createdAt)}</td>
+      </tr>`).join('');
+    host.innerHTML = `<div class="table-wrap"><table class="table">
+      <thead><tr><th>Type</th><th>Dates</th><th>Reason</th><th>Status</th><th>Applied</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+  } catch (err) { PF.toast(err.message, 'error'); }
+}
+
+async function loadAll() {
+  if (PF.Session.user()?.role !== 'admin') return;
+  try {
+    const status = document.getElementById('filter').value;
+    const qs = status ? '?status=' + encodeURIComponent(status) : '';
+    const { leaves } = await PF.api('/api/leave' + qs);
+    const host = document.getElementById('allHost');
+    if (!leaves.length) {
+      host.innerHTML = '<div class="empty">No leave requests in this view.</div>';
+      return;
+    }
+    const rows = leaves.map(l => `
+      <tr>
+        <td>${PF.fmt.escape(l.userName)}<div style="color:var(--text-sec);font-size:.78rem">${PF.fmt.escape(l.userEmail)}</div></td>
+        <td style="text-transform:capitalize">${l.leaveType}</td>
+        <td>${PF.fmt.date(l.fromDate)} → ${PF.fmt.date(l.toDate)}</td>
+        <td>${PF.fmt.escape(l.reason)}</td>
+        <td>${PF.fmt.statusBadge(l.status)}</td>
+        <td class="row-actions">
+          ${l.status === 'pending' ? `
+            <button class="btn btn-success btn-sm" data-act="approve" data-id="${l.id}">Approve</button>
+            <button class="btn btn-danger  btn-sm" data-act="reject"  data-id="${l.id}">Reject</button>
+          ` : `<span class="muted" style="color:var(--text-sec);font-size:.78rem">Decided ${PF.fmt.date(l.decidedAt)}</span>`}
+        </td>
+      </tr>`).join('');
+    host.innerHTML = `<div class="table-wrap"><table class="table">
+      <thead><tr><th>Employee</th><th>Type</th><th>Dates</th><th>Reason</th><th>Status</th><th style="text-align:right">Action</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+
+    host.querySelectorAll('button[data-act]').forEach(btn =>
+      btn.addEventListener('click', () => decide(btn.dataset.id, btn.dataset.act === 'approve' ? 'approved' : 'rejected'))
+    );
+  } catch (err) { PF.toast(err.message, 'error'); }
+}
+
+async function decide(id, status) {
+  try {
+    await PF.api(`/api/leave/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    PF.toast('Leave ' + status, status === 'approved' ? 'success' : 'warn');
+    await loadAll(); await loadMine();
+  } catch (err) { PF.toast(err.message, 'error'); }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('applyForm');
+  const msg  = document.getElementById('applyMsg');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    msg.textContent = ''; msg.className = 'form-msg';
+    const data = Object.fromEntries(new FormData(form).entries());
+    try {
+      await PF.api('/api/leave', { method: 'POST', body: JSON.stringify(data) });
+      msg.textContent = 'Request submitted.'; msg.className = 'form-msg ok';
+      form.reset();
+      await loadMine(); await loadAll();
+    } catch (err) {
+      msg.textContent = err.message; msg.className = 'form-msg error';
+    }
+  });
+  document.getElementById('filter').addEventListener('change', loadAll);
+  loadMine(); loadAll();
+});
+</script>
+</body>
+</html>

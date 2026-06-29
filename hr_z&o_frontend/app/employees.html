@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Employees — PeopleFlow</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+<link rel="stylesheet" href="../assets/css/app.css" />
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div>
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:14px">
+        <button class="menu-btn" aria-label="Menu"><span></span></button>
+        <div class="topbar-title">
+          <h1>Employees</h1>
+          <p>Manage your people directory.</p>
+        </div>
+      </div>
+      <div class="topbar-user" id="userMenu"></div>
+    </header>
+
+    <main class="content">
+      <div class="panel">
+        <div class="panel-head">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <input id="search" type="search" placeholder="Search name, email or code…"
+              style="padding:9px 12px;border:1px solid var(--border);border-radius:8px;min-width:240px" />
+            <input id="dept" type="text" placeholder="Department"
+              style="padding:9px 12px;border:1px solid var(--border);border-radius:8px;width:160px" />
+          </div>
+          <button id="addBtn" class="btn btn-primary admin-only">+ Add Employee</button>
+        </div>
+        <div id="tableHost"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="../assets/js/app.js"></script>
+<script>
+PF.bootstrap({ active: 'employees.html' });
+
+let state = { employees: [], search: '', department: '' };
+
+async function load() {
+  try {
+    const qs = new URLSearchParams();
+    if (state.search) qs.set('search', state.search);
+    if (state.department) qs.set('department', state.department);
+    const path = '/api/employees' + (qs.toString() ? '?' + qs.toString() : '');
+    const { employees } = await PF.api(path);
+    state.employees = employees;
+    render();
+  } catch (err) { PF.toast(err.message, 'error'); }
+}
+
+function render() {
+  const host = document.getElementById('tableHost');
+  if (!state.employees.length) {
+    host.innerHTML = '<div class="empty">No employees found.</div>';
+    return;
+  }
+  const isAdmin = PF.Session.user()?.role === 'admin';
+  const rows = state.employees.map(e => `
+    <tr>
+      <td><strong>${PF.fmt.escape(e.empCode)}</strong></td>
+      <td>${PF.fmt.escape(e.fullName)}</td>
+      <td>${PF.fmt.escape(e.email)}</td>
+      <td>${PF.fmt.escape(e.phone || '—')}</td>
+      <td>${PF.fmt.escape(e.designation || '—')}</td>
+      <td>${PF.fmt.escape(e.department || '—')}</td>
+      <td>${PF.fmt.date(e.joinedDate)}</td>
+      <td>${PF.fmt.statusBadge(e.status)}</td>
+      ${isAdmin ? `
+        <td class="row-actions">
+          <button class="btn btn-outline btn-sm" data-edit="${e.id}">Edit</button>
+          <button class="btn btn-danger  btn-sm" data-del="${e.id}">Delete</button>
+        </td>` : ''}
+    </tr>`).join('');
+  host.innerHTML = `
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr>
+          <th>Code</th><th>Name</th><th>Email</th><th>Phone</th>
+          <th>Designation</th><th>Department</th><th>Joined</th><th>Status</th>
+          ${isAdmin ? '<th style="text-align:right">Actions</th>' : ''}
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+
+  host.querySelectorAll('[data-edit]').forEach(b =>
+    b.addEventListener('click', () => openForm(state.employees.find(e => e.id == b.dataset.edit)))
+  );
+  host.querySelectorAll('[data-del]').forEach(b =>
+    b.addEventListener('click', () => deleteEmployee(state.employees.find(e => e.id == b.dataset.del)))
+  );
+}
+
+function openForm(emp) {
+  const isEdit = !!emp;
+  const form = document.createElement('form');
+  form.className = 'form';
+  form.innerHTML = `
+    <div class="form-row">
+      <div class="field"><label>Employee code *</label><input name="empCode" required value="${PF.fmt.escape(emp?.empCode || '')}" ${isEdit ? 'readonly' : ''}/></div>
+      <div class="field"><label>Status</label>
+        <select name="status">
+          <option value="active"   ${emp?.status === 'active'   ? 'selected' : ''}>Active</option>
+          <option value="inactive" ${emp?.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>First name *</label><input name="firstName" required value="${PF.fmt.escape(emp?.firstName || '')}" /></div>
+      <div class="field"><label>Last name *</label> <input name="lastName"  required value="${PF.fmt.escape(emp?.lastName  || '')}" /></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Email *</label><input name="email" type="email" required value="${PF.fmt.escape(emp?.email || '')}" /></div>
+      <div class="field"><label>Phone</label> <input name="phone" value="${PF.fmt.escape(emp?.phone || '')}" /></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Designation</label><input name="designation" value="${PF.fmt.escape(emp?.designation || '')}" /></div>
+      <div class="field"><label>Department</label>  <input name="department"  value="${PF.fmt.escape(emp?.department  || '')}" /></div>
+    </div>
+    <div class="field"><label>Joined date</label>
+      <input name="joinedDate" type="date" value="${emp?.joinedDate ? emp.joinedDate.slice(0,10) : ''}" />
+    </div>
+    <div class="form-msg" id="emForm-msg"></div>`;
+
+  const foot = document.createElement('div');
+  foot.style.display = 'flex'; foot.style.gap = '10px'; foot.style.justifyContent = 'flex-end';
+  const cancel = document.createElement('button'); cancel.type='button'; cancel.className='btn btn-outline'; cancel.textContent='Cancel';
+  const save   = document.createElement('button'); save.type='submit';   save.className='btn btn-primary'; save.textContent=isEdit?'Save changes':'Create employee';
+  foot.append(cancel, save);
+
+  const m = PF.openModal({ title: isEdit ? `Edit ${emp.fullName}` : 'Add employee', body: form, footer: foot });
+  cancel.onclick = () => m.close();
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form).entries());
+    if (!data.joinedDate) delete data.joinedDate;
+    save.disabled = true; save.textContent = 'Saving…';
+    try {
+      if (isEdit) {
+        await PF.api(`/api/employees/${emp.id}`, { method: 'PATCH', body: JSON.stringify(data) });
+        PF.toast('Employee updated', 'success');
+      } else {
+        await PF.api('/api/employees', { method: 'POST', body: JSON.stringify(data) });
+        PF.toast('Employee added', 'success');
+      }
+      m.close(); await load();
+    } catch (err) {
+      const msg = form.querySelector('#emForm-msg');
+      msg.textContent = err.message; msg.className = 'form-msg error';
+      save.disabled = false; save.textContent = isEdit ? 'Save changes' : 'Create employee';
+    }
+  });
+}
+
+async function deleteEmployee(emp) {
+  if (!emp) return;
+  const ok = await PF.confirmModal({
+    title: 'Delete this employee?',
+    message: `${emp.fullName} (${emp.empCode}) will be permanently removed.`,
+    confirmLabel: 'Delete', danger: true,
+  });
+  if (!ok) return;
+  try {
+    await PF.api(`/api/employees/${emp.id}`, { method: 'DELETE' });
+    PF.toast('Employee deleted', 'success');
+    await load();
+  } catch (err) { PF.toast(err.message, 'error'); }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('addBtn').addEventListener('click', () => openForm(null));
+  let t;
+  document.getElementById('search').addEventListener('input', e => {
+    clearTimeout(t);
+    t = setTimeout(() => { state.search = e.target.value.trim(); load(); }, 250);
+  });
+  document.getElementById('dept').addEventListener('input', e => {
+    clearTimeout(t);
+    t = setTimeout(() => { state.department = e.target.value.trim(); load(); }, 250);
+  });
+  load();
+});
+</script>
+</body>
+</html>

@@ -6,8 +6,12 @@ const express = require('express');
 const cors = require('cors');
 
 const { migrate } = require('./migrate');
-const authRoutes = require('./routes/auth.routes');
-const contactRoutes = require('./routes/contact.routes');
+const authRoutes      = require('./routes/auth.routes');
+const contactRoutes   = require('./routes/contact.routes');
+const employeeRoutes  = require('./routes/employees.routes');
+const attendanceRoutes= require('./routes/attendance.routes');
+const leaveRoutes     = require('./routes/leave.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
 
 const PORT = parseInt(process.env.PORT || '5000', 10);
 
@@ -35,8 +39,12 @@ app.get('/api/health', (req, res) => {
 });
 
 // ----- Routes -----
-app.use('/api/auth',    authRoutes);
-app.use('/api/contact', contactRoutes);
+app.use('/api/auth',       authRoutes);
+app.use('/api/contact',    contactRoutes);
+app.use('/api/employees',  employeeRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/leave',      leaveRoutes);
+app.use('/api/dashboard',  dashboardRoutes);
 
 // ----- 404 -----
 app.use('/api', (req, res) => {

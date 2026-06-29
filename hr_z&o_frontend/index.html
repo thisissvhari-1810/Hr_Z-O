@@ -364,7 +364,7 @@ footer{background:#1C2210;color:#B8C49A;padding:70px 0 30px}
       <a href="#pricing">Pricing</a>
       <a href="#faq">Resources</a>
     </div>
-    <div class="nav-cta">
+    <div class="nav-cta" id="navCta">
       <a href="pages/login.html" class="btn btn-ghost">Login</a>
       <a href="pages/signup.html" class="btn btn-gold">Get Free Demo</a>
       <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
@@ -919,6 +919,20 @@ footer{background:#1C2210;color:#B8C49A;padding:70px 0 30px}
 </footer>
 
 <script>
+// If the visitor is already signed in, swap the nav CTA for an "Open App" link.
+(function(){
+  try{
+    if(localStorage.getItem('peopleflow_token')){
+      const cta=document.getElementById('navCta');
+      if(cta){
+        cta.innerHTML =
+          '<a href="app/index.html" class="btn btn-gold">Open App →</a>' +
+          '<button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>';
+      }
+    }
+  }catch(_){}
+})();
+
 // Sticky nav
 const nav=document.getElementById('nav');
 window.addEventListener('scroll',()=>{nav.classList.toggle('scrolled',window.scrollY>20)});

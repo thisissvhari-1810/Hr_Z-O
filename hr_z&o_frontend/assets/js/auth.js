@@ -80,7 +80,7 @@
           'Logged in. Welcome back, ' + (data.user.firstName || data.user.email) + '!',
           false
         );
-        setTimeout(() => { window.location.href = '../index.html'; }, 800);
+        setTimeout(() => { window.location.href = '../app/index.html'; }, 600);
       } catch (err) {
         showMessage(loginForm, err.message || 'Login failed.', true);
       } finally {
@@ -113,10 +113,10 @@
         setSession(data.token, data.user);
         showMessage(
           signupForm,
-          'Account created! Redirecting to your dashboard…',
+          'Account created! Taking you to your dashboard…',
           false
         );
-        setTimeout(() => { window.location.href = '../index.html'; }, 900);
+        setTimeout(() => { window.location.href = '../app/index.html'; }, 700);
       } catch (err) {
         showMessage(signupForm, err.message || 'Signup failed.', true);
       } finally {

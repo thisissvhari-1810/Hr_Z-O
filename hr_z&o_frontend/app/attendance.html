@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Attendance — PeopleFlow</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+<link rel="stylesheet" href="../assets/css/app.css" />
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div>
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:14px">
+        <button class="menu-btn" aria-label="Menu"><span></span></button>
+        <div class="topbar-title">
+          <h1>Attendance</h1>
+          <p>Punch in / out and review your history.</p>
+        </div>
+      </div>
+      <div class="topbar-user" id="userMenu"></div>
+    </header>
+
+    <main class="content">
+      <div class="punch-box">
+        <div>
+          <div class="punch-pill" id="punchPill">— Loading —</div>
+          <div class="punch-time" id="clock">--:--:--</div>
+          <div class="punch-status" id="punchStatus">Fetching today's status…</div>
+        </div>
+        <div class="punch-cta">
+          <button id="punchBtn" class="btn btn-gold" disabled>Punch In</button>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:18px">
+        <div class="panel-head">
+          <h2>Today's punches</h2>
+          <span class="muted" id="workedLabel" style="color:var(--text-sec);font-size:.85rem"></span>
+        </div>
+        <div id="todayHost"></div>
+      </div>
+
+      <div class="panel" style="margin-top:18px">
+        <div class="panel-head"><h2>Last 30 days</h2></div>
+        <div id="historyHost"></div>
+      </div>
+
+      <div class="panel admin-only" style="margin-top:18px">
+        <div class="panel-head"><h2>Everyone — today (admin)</h2></div>
+        <div id="allHost"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="../assets/js/app.js"></script>
+<script>
+PF.bootstrap({ active: 'attendance.html' });
+
+function tickClock() {
+  const el = document.getElementById('clock');
+  if (!el) return;
+  const d = new Date();
+  el.textContent = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+}
+
+async function loadToday() {
+  try {
+    const data = await PF.api('/api/attendance/today');
+
+    const btn = document.getElementById('punchBtn');
+    const pill = document.getElementById('punchPill');
+    const status = document.getElementById('punchStatus');
+    const worked = document.getElementById('workedLabel');
+
+    btn.disabled = false;
+    if (data.status === 'in') {
+      btn.textContent = 'Punch Out';
+      btn.classList.remove('btn-gold'); btn.classList.add('btn-danger');
+      pill.textContent = '● Currently Punched In';
+      status.textContent = `You punched in at ${PF.fmt.time(data.punches[data.punches.length - 1].punchedAt)}.`;
+    } else {
+      btn.textContent = 'Punch In';
+      btn.classList.add('btn-gold'); btn.classList.remove('btn-danger');
+      pill.textContent = data.status === 'not-punched' ? '○ Not punched in yet' : '○ Punched Out';
+      status.textContent = data.status === 'not-punched'
+        ? 'Have a great day! Punch in when you start work.'
+        : `Last punch-out was at ${PF.fmt.time(data.punches[data.punches.length - 1].punchedAt)}.`;
+    }
+    worked.textContent = `Worked today: ${PF.fmt.duration(data.workedMinutes)}`;
+
+    const host = document.getElementById('todayHost');
+    if (!data.punches.length) {
+      host.innerHTML = '<div class="empty">No punches today yet.</div>';
+    } else {
+      const rows = data.punches.map(p => `
+        <tr>
+          <td>${PF.fmt.time(p.punchedAt)}</td>
+          <td>${PF.fmt.statusBadge(p.type)}</td>
+          <td>${PF.fmt.escape(p.note || '—')}</td>
+        </tr>`).join('');
+      host.innerHTML = `<div class="table-wrap"><table class="table">
+        <thead><tr><th>Time</th><th>Type</th><th>Note</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+    }
+  } catch (err) { PF.toast(err.message, 'error'); }
+}
+
+async function loadHistory() {
+  try {
+    const { punches } = await PF.api('/api/attendance/history?days=30');
+    const host = document.getElementById('historyHost');
+    if (!punches.length) {
+      host.innerHTML = '<div class="empty">No attendance in the last 30 days.</div>';
+      return;
+    }
+    const rows = punches.map(p => `
+      <tr>
+        <td>${PF.fmt.date(p.punchedAt)}</td>
+        <td>${PF.fmt.time(p.punchedAt)}</td>
+        <td>${PF.fmt.statusBadge(p.type)}</td>
+      </tr>`).join('');
+    host.innerHTML = `<div class="table-wrap"><table class="table">
+      <thead><tr><th>Date</th><th>Time</th><th>Type</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+  } catch (err) { PF.toast(err.message, 'error'); }
+}
+
+async function loadAll() {
+  if (PF.Session.user()?.role !== 'admin') return;
+  try {
+    const { punches } = await PF.api('/api/attendance/all');
+    const host = document.getElementById('allHost');
+    if (!punches.length) {
+      host.innerHTML = '<div class="empty">Nobody has punched in today yet.</div>';
+      return;
+    }
+    const rows = punches.map(p => `
+      <tr>
+        <td>${PF.fmt.escape(p.userName)}<div style="color:var(--text-sec);font-size:.78rem">${PF.fmt.escape(p.userEmail)}</div></td>
+        <td>${PF.fmt.time(p.punchedAt)}</td>
+        <td>${PF.fmt.statusBadge(p.type)}</td>
+      </tr>`).join('');
+    host.innerHTML = `<div class="table-wrap"><table class="table">
+      <thead><tr><th>Employee</th><th>Time</th><th>Type</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+  } catch (err) { PF.toast(err.message, 'error'); }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  tickClock(); setInterval(tickClock, 1000);
+  document.getElementById('punchBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('punchBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const { punch } = await PF.api('/api/attendance/punch', { method: 'POST', body: '{}' });
+      PF.toast(`Punched ${punch.type === 'IN' ? 'in' : 'out'} at ${PF.fmt.time(punch.punchedAt)}`, 'success');
+      await loadToday(); await loadHistory(); await loadAll();
+    } catch (err) { PF.toast(err.message, 'error'); btn.disabled = false; }
+  });
+  loadToday(); loadHistory(); loadAll();
+});
+</script>
+</body>
+</html>

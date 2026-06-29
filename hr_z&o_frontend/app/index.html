@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard — PeopleFlow</title>
+<meta name="theme-color" content="#6B7C3A" />
+<link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+<link rel="stylesheet" href="../assets/css/app.css" />
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div>
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:14px">
+        <button class="menu-btn" aria-label="Menu"><span></span></button>
+        <div class="topbar-title">
+          <h1>Dashboard</h1>
+          <p>Welcome back — here's what's happening today.</p>
+        </div>
+      </div>
+      <div class="topbar-user" id="userMenu"></div>
+    </header>
+
+    <main class="content">
+      <div class="stat-grid" id="stats"></div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2 id="recentTitle">Recent leave requests</h2>
+          <a class="btn btn-outline btn-sm" href="leave.html">Open Leave →</a>
+        </div>
+        <div id="recentLeave"></div>
+      </div>
+
+      <div class="panel admin-only">
+        <div class="panel-head">
+          <h2>Recently added employees</h2>
+          <a class="btn btn-outline btn-sm" href="employees.html">Open Employees →</a>
+        </div>
+        <div id="recentEmployees"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="../assets/js/app.js"></script>
+<script>
+PF.bootstrap({ active: 'index.html' });
+
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const data = await PF.api('/api/dashboard/stats');
+
+    // KPI cards
+    document.getElementById('stats').innerHTML = data.cards.map(c => `
+      <div class="stat">
+        <div class="ic">${c.icon}</div>
+        <div class="meta"><div class="v">${c.value}</div><div class="l">${c.label}</div></div>
+      </div>`).join('');
+
+    // Recent leave
+    const lv = document.getElementById('recentLeave');
+    if (!data.recentLeaves?.length) {
+      lv.innerHTML = '<div class="empty">No leave requests yet.</div>';
+    } else {
+      const rows = data.recentLeaves.map(l => `
+        <tr>
+          ${data.scope === 'admin' ? `<td>${PF.fmt.escape(l.userName)}</td>` : ''}
+          <td style="text-transform:capitalize">${l.leaveType}</td>
+          <td>${PF.fmt.date(l.fromDate)} → ${PF.fmt.date(l.toDate)}</td>
+          <td>${PF.fmt.statusBadge(l.status)}</td>
+          <td>${PF.fmt.datetime(l.createdAt)}</td>
+        </tr>`).join('');
+      lv.innerHTML = `
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr>
+              ${data.scope === 'admin' ? '<th>Employee</th>' : ''}
+              <th>Type</th><th>Dates</th><th>Status</th><th>Applied</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }
+
+    // Recent employees (admin only)
+    if (data.recentEmployees) {
+      const emp = document.getElementById('recentEmployees');
+      if (!data.recentEmployees.length) {
+        emp.innerHTML = '<div class="empty">No employees yet. Add the first one from the Employees page.</div>';
+      } else {
+        const rows = data.recentEmployees.map(e => `
+          <tr>
+            <td><strong>${PF.fmt.escape(e.empCode)}</strong></td>
+            <td>${PF.fmt.escape(e.fullName)}</td>
+            <td>${PF.fmt.escape(e.email)}</td>
+            <td>${PF.fmt.escape(e.designation || '—')}</td>
+            <td>${PF.fmt.escape(e.department || '—')}</td>
+          </tr>`).join('');
+        emp.innerHTML = `
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Code</th><th>Name</th><th>Email</th><th>Designation</th><th>Department</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>`;
+      }
+    }
+  } catch (err) {
+    PF.toast(err.message, 'error');
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Profile — PeopleFlow</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+<link rel="stylesheet" href="../assets/css/app.css" />
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div>
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:14px">
+        <button class="menu-btn" aria-label="Menu"><span></span></button>
+        <div class="topbar-title">
+          <h1>My Profile</h1>
+          <p>Update your personal info and password.</p>
+        </div>
+      </div>
+      <div class="topbar-user" id="userMenu"></div>
+    </header>
+
+    <main class="content" style="max-width:780px">
+      <div class="panel">
+        <div class="panel-head"><h2>Personal info</h2></div>
+        <form id="profileForm" class="form" novalidate>
+          <div class="form-row">
+            <div class="field"><label>First name *</label><input name="firstName" required /></div>
+            <div class="field"><label>Last name *</label> <input name="lastName"  required /></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Email</label><input id="emailRO" disabled /></div>
+            <div class="field"><label>Phone</label><input name="phone" /></div>
+          </div>
+          <div class="field"><label>Company</label><input name="company" /></div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <button type="submit" class="btn btn-primary">Save changes</button>
+            <span class="form-msg" id="profileMsg"></span>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel" style="margin-top:18px">
+        <div class="panel-head"><h2>Change password</h2></div>
+        <form id="pwForm" class="form" novalidate>
+          <div class="field"><label>Current password *</label><input name="currentPassword" type="password" required /></div>
+          <div class="field"><label>New password *</label>     <input name="newPassword"     type="password" minlength="8" required />
+            <span class="hint">At least 8 characters.</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <button type="submit" class="btn btn-primary">Update password</button>
+            <span class="form-msg" id="pwMsg"></span>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel" style="margin-top:18px">
+        <div class="panel-head"><h2>Session</h2></div>
+        <p style="color:var(--text-sec);margin-bottom:14px">Signed in on this device. Signing out will require you to log in again.</p>
+        <button class="btn btn-danger" data-logout>Sign out</button>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="../assets/js/app.js"></script>
+<script>
+PF.bootstrap({ active: 'profile.html' });
+
+async function load() {
+  try {
+    const { user } = await PF.api('/api/auth/me');
+    document.querySelector('[name=firstName]').value = user.firstName || '';
+    document.querySelector('[name=lastName]').value  = user.lastName  || '';
+    document.querySelector('[name=phone]').value     = user.phone     || '';
+    document.querySelector('[name=company]').value   = user.company   || '';
+    document.getElementById('emailRO').value         = user.email     || '';
+  } catch (err) { PF.toast(err.message, 'error'); }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  load();
+
+  document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('profileMsg');
+    msg.textContent = ''; msg.className = 'form-msg';
+    const data = Object.fromEntries(new FormData(e.target).entries());
+    try {
+      const { user } = await PF.api('/api/auth/me', { method: 'PATCH', body: JSON.stringify(data) });
+      PF.Session.set(null, user);
+      msg.textContent = 'Profile updated.'; msg.className = 'form-msg ok';
+      PF.renderShell('profile.html');
+    } catch (err) { msg.textContent = err.message; msg.className = 'form-msg error'; }
+  });
+
+  document.getElementById('pwForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('pwMsg');
+    msg.textContent = ''; msg.className = 'form-msg';
+    const data = Object.fromEntries(new FormData(e.target).entries());
+    try {
+      await PF.api('/api/auth/change-password', { method: 'POST', body: JSON.stringify(data) });
+      e.target.reset();
+      msg.textContent = 'Password updated.'; msg.className = 'form-msg ok';
+    } catch (err) { msg.textContent = err.message; msg.className = 'form-msg error'; }
+  });
+});
+</script>
+</body>
+</html>
