@@ -1,0 +1,19 @@
+{
+  "name": "PeopleFlow — India's Smartest HRMS",
+  "short_name": "PeopleFlow",
+  "description": "1 Platform. 127 HR Processes. Zero Chaos.",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F5F6F0",
+  "theme_color": "#6B7C3A",
+  "lang": "en-IN",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

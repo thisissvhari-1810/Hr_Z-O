@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Login — PeopleFlow</title>
+<meta name="description" content="Log in to your PeopleFlow account." />
+<meta name="theme-color" content="#6B7C3A" />
+<link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+<link rel="stylesheet" href="../assets/css/site.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="../index.html" class="logo">
+      <div class="logo-mark">🌿</div>
+      PeopleFlow
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="../index.html#features">Features</a>
+      <a href="../index.html#modules">Modules</a>
+      <a href="../index.html#pricing">Pricing</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="nav-cta">
+      <a href="signup.html" class="btn btn-gold">Get Free Demo</a>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <section class="auth-wrap" style="padding:0">
+    <div class="auth-left">
+      <div class="auth-card">
+        <div>
+          <h1>Welcome back 👋</h1>
+          <p class="sub">Log in to your PeopleFlow workspace.</p>
+        </div>
+
+        <form class="form" data-auth="login" novalidate>
+          <div class="field">
+            <label for="email">Work email</label>
+            <input id="email" type="email" placeholder="you@company.com" required />
+          </div>
+          <div class="field">
+            <label for="password" style="display:flex;justify-content:space-between;align-items:center">
+              <span>Password</span>
+              <button type="button" data-toggle-password="password" style="background:none;border:none;color:var(--primary-dark);font-size:.78rem;font-weight:600;cursor:pointer">Show</button>
+            </label>
+            <input id="password" type="password" placeholder="••••••••" minlength="6" required />
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:.88rem">
+            <label class="checkbox"><input type="checkbox" /> Remember me</label>
+            <a href="#">Forgot password?</a>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Log In</button>
+          <p class="form-msg" style="font-size:.9rem;min-height:1.2em"></p>
+        </form>
+
+        <div class="form-divider">or continue with</div>
+        <div class="social-row">
+          <button class="social-btn">G Google</button>
+          <button class="social-btn">in LinkedIn</button>
+        </div>
+
+        <p style="font-size:.9rem;color:var(--text-sec);text-align:center">
+          New to PeopleFlow? <a href="signup.html"><strong>Create an account</strong></a>
+        </p>
+      </div>
+    </div>
+
+    <div class="auth-right">
+      <div class="auth-quote">
+        <div class="stars">★★★★★</div>
+        <p>"PeopleFlow cut our payroll cycle from 4 days to 40 minutes. The compliance reports alone are worth the price."</p>
+        <div class="who">— Anjali Rao, Head of People, Lumio Tech</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="../assets/js/site.js"></script>
+<script src="../assets/js/auth.js"></script>
+</body>
+</html>

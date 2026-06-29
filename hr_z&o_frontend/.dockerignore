@@ -1,0 +1,8 @@
+.git
+.gitignore
+.dockerignore
+Dockerfile
+README.md
+serve.ps1
+**/.DS_Store
+**/Thumbs.db

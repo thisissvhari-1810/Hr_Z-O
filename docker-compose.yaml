@@ -1,0 +1,83 @@
+# ----------------------------------------------------------------------
+# PeopleFlow — full stack (postgres + backend + frontend)
+#
+# Run:
+#   docker compose up --build
+#
+# Then open:
+#   http://localhost:8080          → frontend
+#   http://localhost:8080/api/...  → backend (proxied through nginx)
+#   http://localhost:4000/api/...  → backend (direct, useful for debugging)
+# ----------------------------------------------------------------------
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: peopleflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     ${POSTGRES_USER:-peopleflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-peopleflow}
+      POSTGRES_DB:       ${POSTGRES_DB:-peopleflow}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      # Exposed on the host so you can connect with psql / DBeaver / pgAdmin
+      # if you want. Remove this block to keep Postgres internal-only.
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-peopleflow} -d ${POSTGRES_DB:-peopleflow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - peopleflow
+
+  backend:
+    build:
+      context: ./hr_z&o_backend
+      dockerfile: Dockerfile
+    container_name: peopleflow-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV:           production
+      PORT:               "4000"
+      POSTGRES_HOST:      postgres
+      POSTGRES_PORT:      "5432"
+      POSTGRES_USER:      ${POSTGRES_USER:-peopleflow}
+      POSTGRES_PASSWORD:  ${POSTGRES_PASSWORD:-peopleflow}
+      POSTGRES_DB:        ${POSTGRES_DB:-peopleflow}
+      JWT_SECRET:         ${JWT_SECRET:-change-me-to-a-long-random-string-in-production}
+      JWT_EXPIRES_IN:     ${JWT_EXPIRES_IN:-7d}
+      # CORS only matters if you call the API from somewhere other than the
+      # nginx proxy (which lives on the same origin).
+      CORS_ORIGIN:        ${CORS_ORIGIN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+    networks:
+      - peopleflow
+
+  frontend:
+    build:
+      context: ./hr_z&o_frontend
+      dockerfile: Dockerfile
+    container_name: peopleflow-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    networks:
+      - peopleflow
+
+volumes:
+  pgdata:
+    name: peopleflow-pgdata
+
+networks:
+  peopleflow:
+    name: peopleflow-net
+    driver: bridge

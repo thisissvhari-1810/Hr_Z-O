@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /pages/login.html
+Disallow: /pages/signup.html
+
+Sitemap: https://peopleflow.in/sitemap.xml

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Start Free Trial — PeopleFlow</title>
+<meta name="description" content="Start your 14-day free trial of PeopleFlow. No credit card required." />
+<meta name="theme-color" content="#6B7C3A" />
+<link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+<link rel="stylesheet" href="../assets/css/site.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="../index.html" class="logo">
+      <div class="logo-mark">🌿</div>
+      PeopleFlow
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="../index.html#features">Features</a>
+      <a href="../index.html#modules">Modules</a>
+      <a href="../index.html#pricing">Pricing</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="nav-cta">
+      <a href="login.html" class="btn btn-ghost">Login</a>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <section class="auth-wrap" style="padding:0">
+    <div class="auth-left">
+      <div class="auth-card">
+        <div>
+          <h1>Start your free trial</h1>
+          <p class="sub">14 days. No credit card. Cancel anytime.</p>
+        </div>
+
+        <form class="form" data-auth="signup" novalidate>
+          <div class="form-row">
+            <div class="field">
+              <label for="fname">First name</label>
+              <input id="fname" type="text" required />
+            </div>
+            <div class="field">
+              <label for="lname">Last name</label>
+              <input id="lname" type="text" required />
+            </div>
+          </div>
+          <div class="field">
+            <label for="email">Work email</label>
+            <input id="email" type="email" placeholder="you@company.com" required />
+          </div>
+          <div class="field">
+            <label for="company">Company name</label>
+            <input id="company" type="text" required />
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label for="size">Company size</label>
+              <select id="size" required>
+                <option value="">Select…</option>
+                <option>1–10</option>
+                <option>11–50</option>
+                <option>51–200</option>
+                <option>201–500</option>
+                <option>501–1000</option>
+                <option>1000+</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="phone">Phone (optional)</label>
+              <input id="phone" type="tel" placeholder="+91 9876543210" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="password" style="display:flex;justify-content:space-between;align-items:center">
+              <span>Password</span>
+              <button type="button" data-toggle-password="password" style="background:none;border:none;color:var(--primary-dark);font-size:.78rem;font-weight:600;cursor:pointer">Show</button>
+            </label>
+            <input id="password" type="password" minlength="8" required />
+            <span class="hint">At least 8 characters.</span>
+          </div>
+          <label class="checkbox">
+            <input type="checkbox" required />
+            <span>I agree to the <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Policy</a>.</span>
+          </label>
+          <button type="submit" class="btn btn-gold btn-block">Create Account →</button>
+          <p class="form-msg" style="font-size:.9rem;min-height:1.2em"></p>
+        </form>
+
+        <p style="font-size:.9rem;color:var(--text-sec);text-align:center">
+          Already have an account? <a href="login.html"><strong>Log in</strong></a>
+        </p>
+      </div>
+    </div>
+
+    <div class="auth-right">
+      <div class="auth-quote">
+        <div class="stars">★★★★★</div>
+        <p>"We replaced 5 different tools with PeopleFlow. Our HR team finally has time to focus on humans, not spreadsheets."</p>
+        <div class="who">— Rohan Mehta, Co-founder, Kettle &amp; Co.</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="../assets/js/site.js"></script>
+<script src="../assets/js/auth.js"></script>
+</body>
+</html>
