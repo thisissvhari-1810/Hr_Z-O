@@ -4,7 +4,7 @@ pipeline {
     environment {
         REPO_URL        = 'https://github.com/YOUR_USERNAME/PeopleFlow.git'
         GIT_CREDENTIALS = 'git-hub-token'
-        BRANCH          = 'main'
+        BRANCH          = 'dev'
 
         VM_HOST         = '140.245.254.149'
 
